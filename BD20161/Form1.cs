@@ -1,43 +1,87 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.IO;
-using System.Text;
-using System.Windows.Forms;
-using MySql.Data.MySqlClient;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using System.Xml.Serialization;
-using System.Xml;
 
 namespace BD20161
 {
     [Serializable]
     public partial class Form1 : Form
     {
-        Form Form2 = new Form2();
-        TabControl tabControl1 = new TabControl();
-        TabPage tabPage = new TabPage();
-        TabPage tabPage1 = new TabPage();
-        ComboBox comboBox1 = new ComboBox();
-        TextBox textBox4 = new TextBox();
-        TextBox textBox3 = new TextBox();
-        TextBox textBox2 = new TextBox();
-        TextBox textBox1 = new TextBox();
-        Label label5 = new Label();
-        Label label4 = new Label();
-        Label label3 = new Label();
-        Label label2 = new Label();
-        Label label1 = new Label();
-        pass passport = new pass();
-        string file = @"pasport.cfg";
-        MySqlConnection con = new MySqlConnection();
-        MySqlConnectionStringBuilder mysqlCSB = new MySqlConnectionStringBuilder();
-        DataGridView tab = new DataGridView();
+        private Form2 Form2 = new Form2();
+        private Form3 Form3;
+        private Form4 Form4 = new Form4();
+        private TabControl tabControl1 = new TabControl();
+        private TabPage tabPage = new TabPage();
+        private TabPage tabPage1 = new TabPage();
+        private ComboBox comboBox1 = new ComboBox();
+        private TextBox textBox4 = new TextBox();
+        private TextBox textBox3 = new TextBox();
+        private TextBox textBox2 = new TextBox();
+        private TextBox textBox1 = new TextBox();
+        private Label label5 = new Label();
+        private Label label4 = new Label();
+        private Label label3 = new Label();
+        private Label label2 = new Label();
+        private Label label1 = new Label();
+        private pass passport = new pass();
+        private string file = @"pasport.cfg";
+        private static MySqlConnection con = new MySqlConnection();
+        private MySqlConnectionStringBuilder mysqlCSB = new MySqlConnectionStringBuilder();
+        private DataGridView tab = new DataGridView();
+
         //DataGridView dataGridView1 = new DataGridView();
-        List<TabPage> LTabPage = new List<TabPage>();
+        private List<TabPage> LTabPage = new List<TabPage>();
+
+        private FileStream fs;
+        private Tab_zapros zapros = new Tab_zapros();
+        private Kabineti kab = new Kabineti();
+
+        private XmlSerializer xmlsr = new XmlSerializer(typeof(pass));
+
+        public Form2 Form21
+        {
+            get
+            {
+                return Form2;
+            }
+
+            set
+            {
+                Form2 = value;
+            }
+        }
+
+        public Form3 Form31
+        {
+            get
+            {
+                return Form3;
+            }
+
+            set
+            {
+                Form3 = value;
+            }
+        }
+
+        public Form4 Form41
+        {
+            get
+            {
+                return Form4;
+            }
+
+            set
+            {
+                Form4 = value;
+            }
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct pass
@@ -49,23 +93,15 @@ namespace BD20161
             public string database;
         }
 
-        void csb(bool b = false)
+        private void csb()
         {
-            
             if (File.Exists(file))
             {
-                try
-                {
-                    XmlSerializer xmlsr = new XmlSerializer(typeof(pass));
-                    using (FileStream fs = new FileStream(file, FileMode.Open))
-                        passport = (pass)xmlsr.Deserialize(fs);
-                }
-                catch (Exception)
-                {
-                }
-                
+                fs = new FileStream(file, FileMode.OpenOrCreate);
+                passport = (pass)xmlsr.Deserialize(fs);
+                fs.Close();
             }
-            if (passport.IP!=null)
+            if (passport.IP != null)
             {
                 textBox1.Text = passport.IP;
                 textBox2.Text = passport.port.ToString();
@@ -79,53 +115,38 @@ namespace BD20161
             }
             mysqlCSB.UserID = textBox3.Text;
             mysqlCSB.Password = textBox4.Text;
-            
 
             con.ConnectionString = mysqlCSB.ConnectionString;
+            comboBox1.Items.Clear();
+            //List<String> list = new List<string>();
+            foreach (DataRow item in GetComments(@"show databases").Rows)
+            {
+                comboBox1.Items.Add(item.ItemArray[0].ToString());
+            }
+
+            //comboBox1.Items.AddRange(list.ToArray());
             try
             {
-                DataTable dt = new DataTable();
-                con.Open();
-                dt.Load(new MySqlCommand(@"show databases;", con).ExecuteReader());
-                con.Close();
-                List<String> list = new List<string>();
-                foreach (DataRow item in dt.Rows)
-                {
-                    list.Add(item.ItemArray[0].ToString());
-                }
-                comboBox1.Items.Clear();
-                comboBox1.Items.AddRange(list.ToArray());
+                comboBox1.SelectedItem = passport.database;
             }
-            catch (Exception ex)
-            {
-                if (b)
-                {
-                    Close();
-                }
-                MessageBox.Show(ex.Message);
-            }
-            comboBox1.SelectedItem = passport.database;
+            catch { }
             if (comboBox1.SelectedItem != null)
             {
                 mysqlCSB.Database = comboBox1.SelectedItem.ToString();
             }
         }
 
-        DataTable GetComments(string queryString = @"show databases;")
+        public static DataTable GetComments(string queryString)
         {
             DataTable dt = new DataTable();
-            con.ConnectionString = mysqlCSB.ConnectionString;
-            MySqlCommand com = new MySqlCommand(queryString, con);
+            //con.ConnectionString = mysqlCSB.ConnectionString;
             try
             {
                 con.Open();
-                dt.Load(com.ExecuteReader());
-                con.Close();
+                dt.Load(new MySqlCommand(queryString, con).ExecuteReader());
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
+            catch { }
+            con.Close();
             return dt;
         }
 
@@ -135,8 +156,63 @@ namespace BD20161
             csb();
             updata();
             Form_create();
-            Form2.FormClosing += Form2_FormClosing;
+            Form21.FormClosing += Form2_FormClosing;
             tabControl.Selected += TabControl_Selected;
+            zapros.button.Click += Button_Click;
+            kab.data.MouseDoubleClick += Data_MouseDoubleClick;
+            kab.menu.ItemClicked += Menu_ItemClicked;
+        }
+
+        private void Menu_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            switch (e.ClickedItem.Text)
+            {
+                case ("Добавить"):
+                    Form31 = new Form3();
+                    Form31.Show();
+                    Form31.Activate();
+                    Enabled = false;
+                    Form31.FormClosing += Form3_FormClosing;
+                    break;
+
+                case ("Изменить"):
+                    Form31 = new Form3();
+                    Form31.Show();
+                    Form31.Activate();
+                    Form31.doit(kab.data.SelectedRows[0]);
+                    Enabled = false;
+                    Form31.FormClosing += Form3_FormClosing;
+                    break;
+
+                case ("Удалить"):
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        private void Form4_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Enabled = true;
+            Form41.FormClosing -= Form4_FormClosing;
+            Activate();
+        }
+
+        private void Form3_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Enabled = true;
+            Form31.FormClosing -= Form3_FormClosing;
+            Activate();
+        }
+
+        private void Data_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+        }
+
+        private void Button_Click(object sender, EventArgs e)
+        {
+            zapros.data.DataSource = GetComments(zapros.textBox.Text);
         }
 
         private void настройкаToolStripMenuItem_Click(object sender, EventArgs e)
@@ -146,58 +222,36 @@ namespace BD20161
 
         public void настройка()
         {
-            Form2.Show();
-            Form2.Activate();
+            Form21.Show();
+            Form21.Activate();
             Enabled = false;
         }
 
         private void updata()
         {
             con.ConnectionString = mysqlCSB.ConnectionString;
-            try
+            LTabPage = new List<TabPage>();
+            foreach (DataRow item in GetComments(@"show tables").Rows)
             {
-                DataTable dt = new DataTable();
-                con.Open();
-                dt.Load(new MySqlCommand(@"show tables", con).ExecuteReader());
-                con.Close();
-                List<String> list = new List<string>();
-                int i = 0;
-                LTabPage.Clear();
-                foreach (DataRow item in dt.Rows)
-                {
-                    LTabPage.Add(new TabPage());
-                    LTabPage[i].Name = "tabPage" + i.ToString();
-                    LTabPage[i].Text = item.ItemArray[0].ToString();
-
-                    i++;
-                }
+                LTabPage.Add(new TabPage());
+                LTabPage[LTabPage.Count - 1].Text = item.ItemArray[0].ToString();
             }
-            catch (Exception ex)
-            {
-                //MessageBox.Show(ex.Message);
-            }
-
             tabControl.TabPages.Clear();
-            foreach (var item in LTabPage)
+            zapros.Parent = tabControl;
+            kab.Parent = tabControl;
+            foreach (TabPage item in LTabPage)
             {
                 tabControl.Controls.Add(item);
                 DataGridView data = new DataGridView();
-                data.Name = "dataGridView" + item.Text;
                 data.Parent = item;
                 data.Dock = DockStyle.Fill;
                 data.ReadOnly = true;
-            }
-            if (tabControl.TabCount!=0)
-            {
-                TabControl_Selected(tabControl, null);
             }
         }
 
         private void Form_create()
         {
-            
-            
-            tabControl1.Parent = Form2;
+            tabControl1.Parent = Form21;
             tabControl1.Controls.Add(tabPage);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.SelectedIndex = 0;
@@ -271,18 +325,16 @@ namespace BD20161
         {
             try
             {
-                TabPage t1 = (TabPage)((TabControl)sender).Controls["tabPage" + ((TabControl)sender).SelectedIndex];
-                ((DataGridView)t1.Controls["dataGridView" + t1.Text]).DataSource = GetComments(@"select * from " + t1.Text);
+                //e.TabPage.Controls.OfType<DataGridView>().FirstOrDefault().DataSource = GetComments(@"select * from " + e.TabPage.Text);
             }
             catch { }
         }
 
         private void ComboBox1_MouseClick(object sender, MouseEventArgs e)
         {
-            ComboBox box = (ComboBox)sender;
-            if (box.Items.Count == 0)
+            if (((ComboBox)sender).Items.Count == 0)
             {
-                csb(true);
+                csb();
             }
         }
 
@@ -298,27 +350,22 @@ namespace BD20161
         {
             Activate();
             e.Cancel = true;
-            Form f = (Form)sender;
-            f.Hide();
+            ((Form)sender).Hide();
             passport.IP = textBox1.Text;
             passport.port = Convert.ToUInt32(textBox2.Text);
             passport.user = textBox3.Text;
             passport.password = textBox4.Text;
-            if (comboBox1.SelectedItem != null)
-            {
-                passport.database = comboBox1.SelectedItem.ToString();
-            }
-            else
-            {
-                Close();
-            }
-            XmlSerializer xmlsr = new XmlSerializer(typeof(pass));
-            using (FileStream fs = new FileStream(file, FileMode.OpenOrCreate)) xmlsr.Serialize(fs, passport);
+            passport.database = comboBox1.SelectedItem.ToString();
+            fs = new FileStream(file, FileMode.Create);
+            xmlsr.Serialize(fs, passport);
+            fs.Close();
             Enabled = true;
-            TabControl_Selected(tabControl, null);
-            //GetComments();
             updata();
         }
 
+        internal static DataTable GetComments()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
