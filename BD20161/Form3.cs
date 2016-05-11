@@ -8,37 +8,115 @@ namespace BD20161
 {
     public partial class Form3 : Form
     {
-        public static string oldid;
-        private bool _new = true;
-        private Timer _t = new Timer();
-        private TextBox kabinet = new TextBox();
-        private List<CheckBox> tips = new List<CheckBox>();
-        private Button ok = new Button();
-        private Label _0 = new Label();
-        private Label _1 = new Label();
+        public Timer _t = new Timer();
         private Label _2 = new Label();
+        private bool _new = true;
+        private TextBox kabinet = new TextBox();
+        private Button ok = new Button();
+        private List<CheckBox> tips = new List<CheckBox>();
+        private string[] parrant_table;
+        private Label[] Lable_array;
+        private List<List<object>> mas = new List<List<object>>();
+        private List<_item> Lab;
+        private List<reference> refer;
+        private DataGridViewRow _row = new DataGridViewRow();
+        private string main_table;
 
-        public Form3()
+        public struct _item
+        {
+            public string name_in_database;
+            public string name;
+            public string table_name;
+            public int n_tip;
+        }
+
+        public struct reference
+        {
+            public string name_in_database;
+            public string table_name;
+            public string ref_name_in_database;
+            public string ref_table_name;
+        }
+
+        public Form3(string m_t, List<_item> Lables, List<reference> reflo, string[] par)
         {
             InitializeComponent();
-            Activated += Form3_Activated;
-            _0.Parent = this;
-            _0.Text = "№";
-            _0.AutoSize = true;
-            _0.Location = new Point(10, 10);
-            kabinet.Parent = this;
-            kabinet.Location = new Point(_0.Left, _0.Bottom);
-            _1.Parent = this;
-            _1.Text = "Тип пары";
-            _1.AutoSize = true;
-            _1.Location = new Point(kabinet.Right + 10, _0.Top);
+
+            int i = 0;
+            Lable_array = new Label[Lables.Count];
+            foreach (_item item0 in Lables)
+            {
+                Lable_array[i] = new Label();
+                Lable_array[i].Parent = this;
+                Lable_array[i].Text = item0.name;
+                Lable_array[i].AutoSize = true;
+                Lable_array[i].Location = new Point(10 + i * 110, 10);
+                mas.Add(new List<object>());
+                mas[i].Clear();
+                switch (item0.n_tip)
+                {
+                    case (0):
+                        mas[i].Add(new TextBox());
+                        ((TextBox)mas[i][0]).Parent = this;
+                        ((TextBox)mas[i][0]).Location = new Point(Lable_array[i].Left, Lable_array[i].Bottom);
+                        break;
+
+                    case (1):
+                        foreach (DataRow item1 in Form1.GetComments(@"select " + item0.name_in_database + " from " + item0.table_name).Rows)
+                        {
+                            mas[i].Add(new CheckBox());
+                            ((CheckBox)mas[i][mas[i].Count - 1]).Parent = this;
+                            ((CheckBox)mas[i][mas[i].Count - 1]).Text = item1.ItemArray[0].ToString();
+                            ((CheckBox)mas[i][mas[i].Count - 1]).Location = new Point(Lable_array[1].Left, Lable_array[1].Bottom + 20 * (mas[i].Count - 1));
+                        }
+                        break;
+
+                    case (2):
+                        mas[i].Add(new ComboBox());
+                        ((ComboBox)mas[i][0]).Parent = this;
+                        ((ComboBox)mas[i][0]).Location = new Point(Lable_array[i].Left, Lable_array[i].Bottom);
+                        foreach (DataRow item1 in Form1.GetComments(@"select " + item0.name_in_database + " from " + item0.table_name).Rows)
+                        {
+                            ((ComboBox)mas[i][0]).Items.Add(item1.ItemArray[0].ToString());
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+                i++;
+            }
+
+            main_table = m_t;
+            Lab = Lables;
+            refer = reflo;
+            parrant_table = par;
+            
             ok.Parent = this;
             ok.Text = "Ok";
             ok.Click += Ok_Click;
+            int max = 0;
+            foreach (var item0 in mas)
+            {
+                try
+                {
+                    if (((CheckBox)item0[0]).Visible == true)
+                    {
+                        if (max < item0.Count)
+                        {
+                            max = item0.Count;
+                            ok.Location = new Point((Width - ok.Width) / 2, ((CheckBox)item0[item0.Count - 1]).Bottom);
+                        }
+                    }
+                }
+                catch { }
+            }
+
             _t.Tick += _t_Tick;
             _t.Interval = 1000;
             _2.Parent = this;
             _2.AutoSize = true;
+            _2.Location = new Point(ok.Right + 10, ok.Top);
         }
 
         public void doit(DataGridViewRow row)
@@ -46,19 +124,41 @@ namespace BD20161
             /*foreach (DataGridViewCell item in row.Cells)
             {
             }*/
-            kabinet.Text = row.Cells[0].Value.ToString();
-            foreach (CheckBox item in tips)
+            _row = row;
+            for (int i = 0; i < Lab.Count; i++)
             {
-                if (row.Cells[1].Value.ToString().Contains(item.Text))
+                switch (Lab[i].n_tip)
                 {
-                    item.Checked = true;
-                }
-                else
-                {
-                    item.Checked = false;
+                    case (0):
+                        ((TextBox)mas[i][0]).Enabled = false;
+                        ((TextBox)mas[i][0]).Text = _row.Cells[0].FormattedValue.ToString();
+                        break;
+
+                    case (1):
+                        foreach (CheckBox item in mas[i])
+                        {
+                            if (row.Cells[1].Value.ToString().Contains(item.Text))
+                            {
+                                item.Checked = true;
+                            }
+                            else
+                            {
+                                item.Checked = false;
+                            }
+                        }
+                        break;
+
+                    case (2):
+                        foreach (DataRow item in Form1.GetComments("").Rows)
+                        {
+                            ((ComboBox)mas[i][0]).Items.Add(item.ItemArray[0].ToString());
+                        }
+                        break;
+
+                    default:
+                        break;
                 }
             }
-            oldid = kabinet.Text;
             _new = false;
         }
 
@@ -72,56 +172,126 @@ namespace BD20161
         {
             DataTable dt;
             bool good = false;
-            dt = Form1.GetComments(@"select * from tipkabineta_tip");
+            dt = Form1.GetComments(@"select * from " + parrant_table[1]);
             string s = "";
-            foreach (CheckBox item in tips)
+            string com;
+            if (_new)
             {
-                if (item.Checked)
+                com = @"INSERT INTO `" + main_table + "` (`";
+                DataTable td = Form1.GetComments(@"show columns from " + main_table);
+                for (int i = 0; i < td.Rows.Count; i++)
                 {
-                    s += s == "" ? "" : ", ";
-                    s += item.Text;
-                }
-            }
-            foreach (DataRow item in dt.Rows)
-            {
-                if (s == item.ItemArray[1].ToString())
-                {
-                    if (_new)
+                    com += td.Rows[i].ItemArray[0].ToString();
+                    if (i < (td.Rows.Count - 1))
                     {
-                        Form1.GetComments(@"INSERT INTO `kabinet` (`Id`, `tip_kabineta`) VALUES ('" + kabinet.Text + "', '" + item.ItemArray[0].ToString() + "')");
+                        com += "`, `";
                     }
                     else
                     {
-                        Form1.GetComments(@"UPDATE `kabinet` SET `Id` = '" + kabinet.Text + "', `tip_kabineta` = '" + item.ItemArray[0].ToString() + "' WHERE `kabinet`.`Id` = " + kabinet.Text);
+                        com += "`) VALUES ('";
                     }
-                    good = true;
-                    break;
+                }
+                for (int i = 0; i < Lab.Count; i++)
+                {
+                    switch (Lab[i].n_tip)
+                    {
+                        case (0):
+                            com += ((TextBox)mas[i][0]).Text;
+                            break;
+
+                        case (1):
+                            foreach (CheckBox item in mas[i])
+                            {
+                                if (item.Checked)
+                                {
+                                    s += s == "" ? "" : ", ";
+                                    s += item.Text;
+                                }
+                            }
+                            foreach (DataRow item in dt.Rows)
+                            {
+                                if (s == item.ItemArray[1].ToString())
+                                {
+                                    com += item.ItemArray[0].ToString();
+                                    good = true;
+                                    break;
+                                }
+                            }
+                            if (!good)
+                            {
+                                Form1.GetComments(@"INSERT INTO `" + parrant_table[1] + "` (`" + dt.Columns[1].ColumnName + "`) VALUES ('" + s + "')");
+                                Ok_Click(sender, e);
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                    if (i < (td.Rows.Count - 1))
+                    {
+                        com += "', '";
+                    }
+                    else
+                    {
+                        com += "')";
+                    }
                 }
             }
-            if (!good)
+            else
             {
-                Form1.GetComments(@"INSERT INTO `tipkabineta_tip` (`" + dt.Columns[1].ColumnName + "`) VALUES ('" + s + "')");
-                Ok_Click(sender, e);
+                com = @"UPDATE `" + main_table + "` SET `";
+                DataTable td = Form1.GetComments(@"show columns from " + main_table);
+                for (int i = 1; i < Lab.Count; i++)
+                {
+                    com += td.Rows[i].ItemArray[0].ToString() + "` = ";
+                    switch (Lab[i].n_tip)
+                    {
+                        case (0):
+                            com += ((TextBox)mas[i][0]).Text;
+                            break;
+
+                        case (1):
+                            foreach (CheckBox item in mas[i])
+                            {
+                                if (item.Checked)
+                                {
+                                    s += s == "" ? "" : ", ";
+                                    s += item.Text;
+                                }
+                            }
+                            foreach (DataRow item in dt.Rows)
+                            {
+                                if (s == item.ItemArray[1].ToString())
+                                {
+                                    com += item.ItemArray[0].ToString();
+                                    good = true;
+                                    break;
+                                }
+                            }
+                            if (!good)
+                            {
+                                Form1.GetComments(@"INSERT INTO `" + parrant_table[1] + "` (`" + dt.Columns[1].ColumnName + "`) VALUES ('" + s + "')");
+                                Ok_Click(sender, e);
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+                    if (i < (td.Rows.Count - 1))
+                    {
+                        com += ", `";
+                    }
+                    else
+                    {
+                        com += " WHERE `";
+                    }
+                }
+                com += main_table + "`.`" + Form1.GetComments(@"show columns from " + main_table + " where `Key` = 'PRI'").Rows[0].ItemArray[0].ToString() + "` = " + ((TextBox)mas[0][0]).Text;
             }
+            Form1.GetComments(com);
             _2.Text = "Готово";
             _t.Enabled = true;
-        }
-
-        private void Form3_Activated(object sender, EventArgs e)
-        {
-            if (tips.Count == 0)
-            {
-                foreach (DataRow item in Form1.GetComments(@"select tip from tip_predmeta").Rows)
-                {
-                    tips.Add(new CheckBox());
-                    tips[tips.Count - 1].Parent = this;
-                    tips[tips.Count - 1].Text = item.ItemArray[0].ToString();
-                    tips[tips.Count - 1].Location = new Point(_1.Left, _1.Bottom + 20 * (tips.Count - 1));
-                }
-                ok.Location = new Point((Width - ok.Width) / 2, tips[tips.Count - 1].Bottom);
-                _2.Location = new Point(ok.Right + 10, ok.Top);
-                Height = ok.Bottom + 40;
-            }
         }
     }
 }

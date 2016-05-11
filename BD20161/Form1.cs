@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Xml.Serialization;
@@ -13,84 +14,108 @@ namespace BD20161
     [Serializable]
     public partial class Form1 : Form
     {
-        private Form2 Form2 = new Form2();
-        private Form3 Form3;
-        private Form4 Form4 = new Form4();
-        private TabControl tabControl1 = new TabControl();
-        private TabPage tabPage = new TabPage();
-        private TabPage tabPage1 = new TabPage();
-        private ComboBox comboBox1 = new ComboBox();
-        private TextBox textBox4 = new TextBox();
-        private TextBox textBox3 = new TextBox();
-        private TextBox textBox2 = new TextBox();
-        private TextBox textBox1 = new TextBox();
-        private Label label5 = new Label();
-        private Label label4 = new Label();
-        private Label label3 = new Label();
-        private Label label2 = new Label();
-        private Label label1 = new Label();
-        private pass passport = new pass();
-        private string file = @"pasport.cfg";
         private static MySqlConnection con = new MySqlConnection();
-        private MySqlConnectionStringBuilder mysqlCSB = new MySqlConnectionStringBuilder();
-        private DataGridView tab = new DataGridView();
+        private ComboBox comboBox1 = new ComboBox();
+        private string file = @"pasport.cfg";
+        private Form Form = new Form();
+        private FileStream fs;
+
+        private Kabineti kab = new Kabineti(@"select a.ID as '№', b.tips as 'Тип' from kabinet as a,tipkabineta_tip as b where a.tip_kabineta=b.ID ORDER BY a.ID", "kabinet", new string[] { "tip_predmeta", "tipkabineta_tip" }, new List<Form3._item>()
+        {
+            new Form3._item() { name = "№", name_in_database = "ID", n_tip = 0, table_name = "kabinet" },
+            new Form3._item() { name = "Тип", name_in_database = "tip", n_tip = 1, table_name = "tip_predmeta" }
+        }, new List<Form3.reference>()
+        {
+            new Form3.reference() {name_in_database="tip_kabineta",ref_name_in_database="Id",ref_table_name="tipkabineta_tip",table_name="kabinet" }
+        });
+
+        private Kabineti prepod = new Kabineti(@"select a.Prepod as 'ФИО', b.predmets as 'Предметы' from prepodovateli as a,predmets_group as b where a.predmrts=b.ID ORDER BY a.Prepod", "prepodovateli", new string[] { "predmet", "predmets_group" }, new List<Form3._item>()
+        {
+            new Form3._item() { name = "ФИО", name_in_database = "Prepod", n_tip = 0, table_name = "prepodovateli" },
+            new Form3._item() { name = "Предметы", name_in_database = "predmet", n_tip = 1, table_name = "predmet" }
+        }, new List<Form3.reference>()
+        {
+            new Form3.reference() {name_in_database="predmrts",ref_name_in_database="Id",ref_table_name="predmets_group",table_name="prepodovateli" }
+        });
+
+        private Label label1 = new Label();
+        private Label label2 = new Label();
+        private Label label3 = new Label();
+        private Label label4 = new Label();
+        private Label label5 = new Label();
 
         //DataGridView dataGridView1 = new DataGridView();
         private List<TabPage> LTabPage = new List<TabPage>();
 
-        private FileStream fs;
-        private Tab_zapros zapros = new Tab_zapros();
-        private Kabineti kab = new Kabineti();
-
+        private MySqlConnectionStringBuilder mysqlCSB = new MySqlConnectionStringBuilder();
+        private pass passport = new pass();
+        private DataGridView tab = new DataGridView();
+        private TabControl tabControl1 = new TabControl();
+        private TabPage tabPage = new TabPage();
+        private TabPage tabPage1 = new TabPage();
+        private TextBox textBox1 = new TextBox();
+        private TextBox textBox2 = new TextBox();
+        private TextBox textBox3 = new TextBox();
+        private TextBox textBox4 = new TextBox();
         private XmlSerializer xmlsr = new XmlSerializer(typeof(pass));
+        private Tab_zapros zapros = new Tab_zapros();
 
-        public Form2 Form21
+        public Form1()
         {
-            get
-            {
-                return Form2;
-            }
+            InitializeComponent();
+            csb();
+            updata();
+            Form_create();
+            Form.FormClosing += Form_FormClosing;
+            tabControl.Selected += TabControl_Selected;
+            zapros.button.Click += Button_Click;
+        }
 
-            set
+        public static DataTable GetComments(string queryString)
+        {
+            DataTable dt = new DataTable();
+            //con.ConnectionString = mysqlCSB.ConnectionString;
+            try
             {
-                Form2 = value;
+                con.Open();
+                dt.Load(new MySqlCommand(queryString, con).ExecuteReader());
+            }
+            catch { }
+            con.Close();
+            return dt;
+        }
+
+        public void настройка()
+        {
+            Form.Show();
+            Form.Activate();
+            Enabled = false;
+        }
+
+        internal static DataTable GetComments()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Button_Click(object sender, EventArgs e)
+        {
+            zapros.data.DataSource = GetComments(zapros.textBox.Text);
+        }
+
+        private void ComboBox1_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (((ComboBox)sender).Items.Count == 0)
+            {
+                csb();
             }
         }
 
-        public Form3 Form31
+        private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            get
+            if (comboBox1.SelectedItem != null)
             {
-                return Form3;
+                mysqlCSB.Database = comboBox1.SelectedItem.ToString();
             }
-
-            set
-            {
-                Form3 = value;
-            }
-        }
-
-        public Form4 Form41
-        {
-            get
-            {
-                return Form4;
-            }
-
-            set
-            {
-                Form4 = value;
-            }
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        public struct pass
-        {
-            public string IP;
-            public UInt32 port;
-            public string user;
-            public string password;
-            public string database;
         }
 
         private void csb()
@@ -136,122 +161,9 @@ namespace BD20161
             }
         }
 
-        public static DataTable GetComments(string queryString)
-        {
-            DataTable dt = new DataTable();
-            //con.ConnectionString = mysqlCSB.ConnectionString;
-            try
-            {
-                con.Open();
-                dt.Load(new MySqlCommand(queryString, con).ExecuteReader());
-            }
-            catch { }
-            con.Close();
-            return dt;
-        }
-
-        public Form1()
-        {
-            InitializeComponent();
-            csb();
-            updata();
-            Form_create();
-            Form21.FormClosing += Form2_FormClosing;
-            tabControl.Selected += TabControl_Selected;
-            zapros.button.Click += Button_Click;
-            kab.data.MouseDoubleClick += Data_MouseDoubleClick;
-            kab.menu.ItemClicked += Menu_ItemClicked;
-        }
-
-        private void Menu_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
-        {
-            switch (e.ClickedItem.Text)
-            {
-                case ("Добавить"):
-                    Form31 = new Form3();
-                    Form31.Show();
-                    Form31.Activate();
-                    Enabled = false;
-                    Form31.FormClosing += Form3_FormClosing;
-                    break;
-
-                case ("Изменить"):
-                    Form31 = new Form3();
-                    Form31.Show();
-                    Form31.Activate();
-                    Form31.doit(kab.data.SelectedRows[0]);
-                    Enabled = false;
-                    Form31.FormClosing += Form3_FormClosing;
-                    break;
-
-                case ("Удалить"):
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        private void Form4_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            Enabled = true;
-            Form41.FormClosing -= Form4_FormClosing;
-            Activate();
-        }
-
-        private void Form3_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            Enabled = true;
-            Form31.FormClosing -= Form3_FormClosing;
-            Activate();
-        }
-
-        private void Data_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-        }
-
-        private void Button_Click(object sender, EventArgs e)
-        {
-            zapros.data.DataSource = GetComments(zapros.textBox.Text);
-        }
-
-        private void настройкаToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            настройка();
-        }
-
-        public void настройка()
-        {
-            Form21.Show();
-            Form21.Activate();
-            Enabled = false;
-        }
-
-        private void updata()
-        {
-            con.ConnectionString = mysqlCSB.ConnectionString;
-            LTabPage = new List<TabPage>();
-            foreach (DataRow item in GetComments(@"show tables").Rows)
-            {
-                LTabPage.Add(new TabPage());
-                LTabPage[LTabPage.Count - 1].Text = item.ItemArray[0].ToString();
-            }
-            tabControl.TabPages.Clear();
-            zapros.Parent = tabControl;
-            kab.Parent = tabControl;
-            foreach (TabPage item in LTabPage)
-            {
-                tabControl.Controls.Add(item);
-                DataGridView data = new DataGridView();
-                data.Parent = item;
-                data.Dock = DockStyle.Fill;
-                data.ReadOnly = true;
-            }
-        }
-
         private void Form_create()
         {
-            tabControl1.Parent = Form21;
+            tabControl1.Parent = Form;
             tabControl1.Controls.Add(tabPage);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.SelectedIndex = 0;
@@ -313,40 +225,7 @@ namespace BD20161
             label1.Text = "Адрес";
         }
 
-        private void ComboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (comboBox1.SelectedItem != null)
-            {
-                mysqlCSB.Database = comboBox1.SelectedItem.ToString();
-            }
-        }
-
-        private void TabControl_Selected(object sender, TabControlEventArgs e)
-        {
-            try
-            {
-                //e.TabPage.Controls.OfType<DataGridView>().FirstOrDefault().DataSource = GetComments(@"select * from " + e.TabPage.Text);
-            }
-            catch { }
-        }
-
-        private void ComboBox1_MouseClick(object sender, MouseEventArgs e)
-        {
-            if (((ComboBox)sender).Items.Count == 0)
-            {
-                csb();
-            }
-        }
-
-        private void TextBox2_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (!Char.IsDigit(e.KeyChar) && e.KeyChar != Convert.ToChar(8))
-            {
-                e.Handled = true;
-            }
-        }
-
-        private void Form2_FormClosing(object sender, FormClosingEventArgs e)
+        private void Form_FormClosing(object sender, FormClosingEventArgs e)
         {
             Activate();
             e.Cancel = true;
@@ -363,9 +242,62 @@ namespace BD20161
             updata();
         }
 
-        internal static DataTable GetComments()
+        private void TabControl_Selected(object sender, TabControlEventArgs e)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (e.TabPageIndex > 2)
+                {
+                    e.TabPage.Controls.OfType<DataGridView>().FirstOrDefault().DataSource = GetComments(@"select * from " + e.TabPage.Text + " ORDER BY " + GetComments(@"show columns from " + e.TabPage.Text + " where `Key` = 'PRI'").Rows[0].ItemArray[0].ToString() + " ASC");//show columns from kabinet where `Key` = "PRI"
+                }
+            }
+            catch { }
+        }
+
+        private void TextBox2_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!Char.IsDigit(e.KeyChar) && e.KeyChar != Convert.ToChar(8))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void updata()
+        {
+            con.ConnectionString = mysqlCSB.ConnectionString;
+            LTabPage = new List<TabPage>();
+            foreach (DataRow item in GetComments(@"show tables").Rows)
+            {
+                LTabPage.Add(new TabPage());
+                LTabPage[LTabPage.Count - 1].Text = item.ItemArray[0].ToString();
+            }
+            tabControl.TabPages.Clear();
+            zapros.Parent = tabControl;
+            kab.Parent = tabControl;
+            prepod.Parent = tabControl;
+            foreach (TabPage item in LTabPage)
+            {
+                tabControl.Controls.Add(item);
+                DataGridView data = new DataGridView();
+                data.Parent = item;
+                data.Dock = DockStyle.Fill;
+                data.ReadOnly = true;
+            }
+        }
+
+        private void настройкаToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            настройка();
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct pass
+        {
+            public string IP;
+            public UInt32 port;
+            public string user;
+            public string password;
+            public string database;
         }
     }
 }
