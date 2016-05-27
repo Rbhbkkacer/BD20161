@@ -48,7 +48,7 @@ namespace BD20161
             //cell.OwningRow.HeaderCell;
         }
 
-        private void Ok_Click(object sender, System.EventArgs e)
+        private void Ok_Click(object sender, EventArgs e)
         {
             cell.Predmet = Combo1.SelectedItem.ToString();
             cell.Teacher = Combo2.SelectedItem.ToString();
@@ -64,7 +64,7 @@ namespace BD20161
             }
             //cell.OwningRow.HeaderCell==new DateTime(2016, 2, _0 + 1).ToString("dddd");
             //int dow = Convert.ToInt32(SQL.GetComment("select dow from main where dow = '" + (cell.OwningColumn.Index + 1) + "'  time='" + (cell.OwningRow.Index + 1) + "'"));
-            if (SQL.GetComment("select dow from main where dow = '" + (cell.OwningColumn.Index + 1) + "' && time='" + (cell.OwningRow.Index + 1) + "'") == "")
+            if (SQL.GetComment("select dow from main where dow = '" + (cell.OwningColumn.Index + 1) + "' && time='" + (cell.OwningRow.Index + 1) + "' && Gruppa='" + (cell.DataGridView.Parent as TabPage).Text + "'") == "")
             {
                 SQL.GetComments("INSERT INTO `main` (`dow`,`time`,`Gruppa`,`Para`) VALUES('" + (cell.OwningColumn.Index + 1) + "','" + (cell.OwningRow.Index + 1) + "','" + (cell.DataGridView.Parent as TabPage).Text + "','" + IdPara + "')");
                 Ok_Click(sender, e);
@@ -72,12 +72,13 @@ namespace BD20161
             }
             else
             {
-                int dow = Convert.ToInt32(SQL.GetComment("select dow from main where dow = '" + (cell.OwningColumn.Index + 1) + "' && time='" + (cell.OwningRow.Index + 1) + "'"));
-                SQL.GetComments("UPDATE `main` SET Gruppa='" + (cell.DataGridView.Parent as TabPage).Text + "', Para='" + IdPara + "' where dow='" + (cell.OwningColumn.Index + 1) + "' && time='" + (cell.OwningRow.Index + 1) + "'");
+                //int dow = Convert.ToInt32(SQL.GetComment("select dow from main where dow = '" + (cell.OwningColumn.Index + 1) + "' && time='" + (cell.OwningRow.Index + 1) + "'"));
+                SQL.GetComments("UPDATE `main` SET Para='" + IdPara + "' where dow='" + (cell.OwningColumn.Index + 1) + "' && time='" + (cell.OwningRow.Index + 1) + "' && Gruppa='" + (cell.DataGridView.Parent as TabPage).Text + "'");
             }
+            ((sender as Button).Parent as Form).Close();
         }
 
-        private void Combo1_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void Combo1_SelectedIndexChanged(object sender, EventArgs e)
         {
             Combo2.Items.Clear();
             //Combo2.Text = "";
@@ -88,7 +89,7 @@ namespace BD20161
             Combo2.SelectedItem = cell.Teacher;
         }
 
-        private void Combo2_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void Combo2_SelectedIndexChanged(object sender, EventArgs e)
         {
             Combo3.Items.Clear();
             //Combo3.Text = "";
@@ -99,7 +100,7 @@ namespace BD20161
             Combo3.SelectedItem = cell.Tip_par;
         }
 
-        private void Combo3_SelectedIndexChanged(object sender, System.EventArgs e)
+        private void Combo3_SelectedIndexChanged(object sender, EventArgs e)
         {
             Combo4.Items.Clear();
             //Combo4.Text = "";

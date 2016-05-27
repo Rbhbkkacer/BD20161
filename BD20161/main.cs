@@ -18,7 +18,7 @@ namespace BD20161
         private Form ConfigForm = new Form();
         private string ConfigFile = @"pasport.cfg";
         private FileStream fs;
-        private Tab_grups grups = new Tab_grups();
+        private Tab_grups grups = new Tab_grups() { Text = "Группы" };
 
         private Tab_kab_prep kab = new Tab_kab_prep(@"select a.ID as '№', b.tips as 'Тип' from kabinet as a,tipkabineta_tip as b where a.tip_kabineta=b.ID ORDER BY a.ID", "kabinet", new string[] { "tip_predmeta", "tipkabineta_tip" }, new List<edit_kab_prep._item>()
         {
@@ -256,10 +256,6 @@ namespace BD20161
         {
             SQL.con.ConnectionString = mysqlCSB.ConnectionString;
             tabControl.TabPages.Clear();
-            //zapros.Parent = tabControl;
-            grups.Parent = tabControl;
-            kab.Parent = tabControl;
-            prepod.Parent = tabControl;
             for (int i = 0; i < r1.Length; i++)
             {
                 if (r1[i] != null)
@@ -268,6 +264,10 @@ namespace BD20161
                 }
                 r1[i] = new Tab_rasp(i + 1) { Parent = tabControl, Text = (i + 1).ToString() + " курс" };
             }
+            //zapros.Parent = tabControl;
+            grups.Parent = tabControl;
+            kab.Parent = tabControl;
+            prepod.Parent = tabControl;
         }
 
         private void настройкаToolStripMenuItem_Click(object sender, EventArgs e)
