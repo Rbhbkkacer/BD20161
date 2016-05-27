@@ -22,5 +22,16 @@ namespace BD20161.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("server=localhost;user id=root;password=root;persistsecurityinfo=True;port=1234;da" +
+            "tabase=database")]
+        public string databaseConnectionString {
+            get {
+                return ((string)(this["databaseConnectionString"]));
+            }
+        }
     }
 }

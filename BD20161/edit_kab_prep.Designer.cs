@@ -1,6 +1,6 @@
 ﻿namespace BD20161
 {
-    partial class Form4
+    partial class edit_kab_prep
     {
         /// <summary>
         /// Required designer variable.
@@ -30,13 +30,13 @@
         {
             this.SuspendLayout();
             // 
-            // Form4
+            // Form3
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(292, 272);
-            this.Name = "Form4";
-            this.Text = "Form4";
+            this.Name = "Form3";
+            this.Text = "Form3";
             this.ResumeLayout(false);
 
         }

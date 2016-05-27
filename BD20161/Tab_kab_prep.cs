@@ -4,18 +4,18 @@ using System.Windows.Forms;
 
 namespace BD20161
 {
-    public class Kabineti : TabPage
+    public class Tab_kab_prep : TabPage
     {
-        public DataGridView data = new DataGridView();
-        public ContextMenuStrip menu = new ContextMenuStrip();
-        private Form3 Form3;
+        private DataGridView data = new DataGridView();
+        private ContextMenuStrip menu = new ContextMenuStrip();
+        private edit_kab_prep Form3;
         private string zapros;
         private string main_table;
-        private List<Form3._item> arr;
-        private List<Form3.reference> refer;
+        private List<edit_kab_prep._item> arr;
+        private List<edit_kab_prep.reference> refer;
         private string[] par;
 
-        public Kabineti(string zap, string m_t, string[] parrent, List<Form3._item> z, List<Form3.reference> x)
+        public Tab_kab_prep(string zap, string m_t, string[] parrent, List<edit_kab_prep._item> z, List<edit_kab_prep.reference> x)
         {
             par = parrent;
             refer = x;
@@ -46,53 +46,51 @@ namespace BD20161
         private void Data_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
-            {
                 menu.Show((DataGridView)sender, new System.Drawing.Point(e.X, e.Y));
-            }
         }
 
         private void Form3_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Enabled = true;
+            Parent.Parent.Enabled = true;
             Form3.FormClosing -= Form3_FormClosing;
-            (this.Parent.Parent as Form).Activate();
+            (Parent.Parent as Form).Activate();
             Kabineti_ParentChanged(sender, new EventArgs());
         }
 
         private void Kabineti_ParentChanged(object sender, EventArgs e)
         {
-            data.DataSource = Form1.GetComments(zapros);
+            data.DataSource = SQL.GetComments(zapros);
         }
 
         private void Menu_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
+            Form3 = new edit_kab_prep(main_table, arr, refer, par);
             switch (e.ClickedItem.Text)
             {
-                case ("Добавить"):
-                    Form3 = new Form3(main_table, arr, refer, par);
-                    Form3.Show();
-                    Form3.Activate();
-                    Enabled = false;
-                    Form3.FormClosing += Form3_FormClosing;
-                    Form3._t.Tick += Kabineti_ParentChanged;
-                    break;
-
                 case ("Изменить"):
-                    Form3 = new Form3(main_table, arr, refer, par);
-                    Form3.Show();
-                    Form3.Activate();
-                    Form3.doit(data.SelectedRows[0]);
-                    Enabled = false;
-                    Form3.FormClosing += Form3_FormClosing;
-                    Form3._t.Tick += Kabineti_ParentChanged;
-                    break;
+                    if (data.SelectedRows.Count != 0)
+                        foreach (DataGridViewCell item in data.SelectedRows[0].Cells)
+                            if (item.FormattedValue.ToString() != "")
+                            {
+                                Form3.doit(data.SelectedRows[0]);
+                                break;
+                            }
+                    goto default;
 
                 case ("Удалить"):
-                    Form1.GetComments(@"DELETE FROM `" + main_table + "` WHERE `" + main_table + "`.`" + Form1.GetComments(@"show columns from " + main_table + " where `Key` = 'PRI'").Rows[0].ItemArray[0].ToString() + "` = '" + data.SelectedRows[0].Cells[0].Value.ToString() + "'");
+                    foreach (DataGridViewRow item in data.SelectedRows)
+                    {
+                        SQL.GetComments(@"DELETE FROM `" + main_table + "` WHERE `" + main_table + "`.`" + SQL.GetComment(@"show columns from " + main_table + " where `Key` = 'PRI'") + "` = '" + item.Cells[0].Value.ToString() + "'");
+                    }
                     Kabineti_ParentChanged(sender, new EventArgs());
                     break;
 
                 default:
+                    Form3.Show();
+                    Form3.Activate();
+                    Parent.Parent.Enabled = false;
+                    Form3.FormClosing += Form3_FormClosing;
+                    Form3._t.Tick += Kabineti_ParentChanged;
                     break;
             }
         }
